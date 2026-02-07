@@ -44,6 +44,11 @@ This project is released into the public domain. See the [LICENSE](LICENSE.md) f
 - **✅ Dark/Light Themes**: Terminal-inspired aesthetic matching iOS version
 - **✅ Battery Optimization**: Adaptive scanning and power management
 
+## Library
+
+Standalone mesh library (no Tor/Nostr) documentation is in [bitchat-mesh/README.md](bitchat-mesh/README.md).
+Implementation plan is in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
+
 ## Android Setup
 
 ### Prerequisites

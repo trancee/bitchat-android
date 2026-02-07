@@ -16,20 +16,21 @@ tasks.whenTaskAdded {
     }
 }
 
-val javaToolchains = extensions.getByType<JavaToolchainService>()
-
 subprojects {
+    val javaToolchains = extensions.findByType<JavaToolchainService>()
     tasks.withType<JavaCompile>().configureEach {
-        javaCompiler.set(
-            javaToolchains.compilerFor {
-                languageVersion.set(JavaLanguageVersion.of(8))
-            }
-        )
+        if (javaToolchains != null) {
+            javaCompiler.set(
+                javaToolchains.compilerFor {
+                    languageVersion.set(JavaLanguageVersion.of(8))
+                }
+            )
+        }
     }
 
     plugins.withId("org.jetbrains.kotlin.android") {
         extensions.configure<KotlinAndroidProjectExtension> {
-            jvmToolchain(8)
+            jvmToolchain(21)
         }
     }
 }

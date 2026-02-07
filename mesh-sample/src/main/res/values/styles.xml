@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MeshSample" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/mesh_primary</item>
+        <item name="colorPrimaryDark">@color/mesh_secondary</item>
+        <item name="colorAccent">@color/mesh_primary</item>
+        <item name="android:windowBackground">@color/mesh_surface</item>
+        <item name="android:statusBarColor">@color/mesh_surface</item>
+    </style>
+</resources>

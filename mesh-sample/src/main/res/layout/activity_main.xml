@@ -4,11 +4,52 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="20dp"
+    android:background="@color/mesh_surface">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_mesh_sample"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/mesh_text_primary" />
+
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/status_stopped"
+            android:textSize="12sp"
+            android:textColor="@color/mesh_status_text"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:background="@drawable/bg_status_chip" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/subtitle_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/subtitle_mesh"
+        android:textSize="13sp"
+        android:textColor="@color/mesh_text_secondary" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
         android:orientation="horizontal">
 
         <Button
@@ -16,41 +57,96 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Start" />
+            android:text="@string/action_start"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/mesh_primary"
+            android:textColor="@color/mesh_on_primary" />
 
         <Button
             android:id="@+id/stop_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Stop" />
+            android:layout_marginStart="10dp"
+            android:text="@string/action_stop"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/mesh_secondary"
+            android:textColor="@color/mesh_on_secondary" />
     </LinearLayout>
 
     <EditText
         android:id="@+id/message_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Message" />
+        android:layout_marginTop="14dp"
+        android:hint="@string/hint_message"
+        android:padding="12dp"
+        android:background="@drawable/bg_input"
+        android:textColor="@color/mesh_text_primary"
+        android:textColorHint="@color/mesh_text_hint" />
 
     <Button
         android:id="@+id/send_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Send Broadcast"
-        android:layout_marginTop="8dp" />
+        android:text="@string/action_send"
+        android:layout_marginTop="10dp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/mesh_primary"
+        android:textColor="@color/mesh_on_primary" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/log_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_log"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/mesh_text_primary" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/autoscroll_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_autoscroll"
+            android:textSize="12sp"
+            android:textColor="@color/mesh_text_secondary" />
+
+        <Button
+            android:id="@+id/clear_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/action_clear"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/mesh_surface_alt"
+            android:textColor="@color/mesh_text_primary" />
+    </LinearLayout>
 
     <ScrollView
+        android:id="@+id/log_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_log_window"
+        android:fillViewport="true"
+        android:padding="12dp">
 
         <TextView
             android:id="@+id/log_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:textColor="@color/mesh_text_primary"
+            android:lineSpacingExtra="2dp" />
     </ScrollView>
 </LinearLayout>

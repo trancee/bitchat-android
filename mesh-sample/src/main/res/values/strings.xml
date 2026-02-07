@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">bitchat mesh sample</string>
+    <string name="title_mesh_sample">Mesh Sample</string>
+    <string name="subtitle_mesh">BLE mesh discovery, messaging, and debug telemetry</string>
+    <string name="title_log">Debug log</string>
+    <string name="action_start">Start mesh</string>
+    <string name="action_stop">Stop mesh</string>
+    <string name="action_send">Send broadcast</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_autoscroll">Auto-scroll</string>
+    <string name="hint_message">Write a message</string>
+    <string name="status_running">Running</string>
+    <string name="status_stopped">Stopped</string>
 </resources>

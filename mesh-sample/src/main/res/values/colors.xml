@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mesh_primary">#1F6FEB</color>
+    <color name="mesh_on_primary">#FFFFFF</color>
+    <color name="mesh_secondary">#2D333B</color>
+    <color name="mesh_on_secondary">#E6EDF3</color>
+    <color name="mesh_surface">#F5F7FA</color>
+    <color name="mesh_surface_alt">#FFFFFF</color>
+    <color name="mesh_text_primary">#0F172A</color>
+    <color name="mesh_text_secondary">#4B5563</color>
+    <color name="mesh_text_hint">#94A3B8</color>
+    <color name="mesh_status_text">#0F172A</color>
+    <color name="mesh_status_bg">#E2E8F0</color>
+    <color name="mesh_status_bg_running">#DCFCE7</color>
+    <color name="mesh_log_border">#D0D7DE</color>
+    <color name="mesh_input_border">#CBD5E1</color>
+</resources>

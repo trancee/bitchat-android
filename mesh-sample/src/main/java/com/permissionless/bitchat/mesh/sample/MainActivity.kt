@@ -16,6 +16,8 @@ import com.bitchat.android.model.BitchatMessage
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.ArrayDeque
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
     private lateinit var meshManager: MeshManager
@@ -26,7 +28,43 @@ class MainActivity : AppCompatActivity() {
     private val logLines: ArrayDeque<String> = ArrayDeque()
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
     private var isAutoScrollEnabled = true
-    private val maxLogLines = 250
+    private val maxLogLines = 1000
+    private var logcatProcess: Process? = null
+    private var logcatThread: Thread? = null
+    private val logcatTagRegex = Regex("\\s[VDIWEF]\\s+([^:]+):")
+    private val logcatBinary = "/system/bin/logcat"
+    private val meshLogTags = setOf(
+        "AndroidHandshake",
+        "AndroidSymmetric",
+        "BinaryProtocol",
+        "BitchatFilePacket",
+        "BluetoothConnectionManager",
+        "BluetoothConnectionTracker",
+        "BluetoothGattClientManager",
+        "BluetoothGattServerManager",
+        "BluetoothMeshService",
+        "BluetoothPacketBroadcaster",
+        "CompressionUtil",
+        "EncryptionService",
+        "FileSharingManager",
+        "FileUtils",
+        "FragmentManager",
+        "GossipSyncManager",
+        "MessageHandler",
+        "NoiseChannelEncryption",
+        "NoiseEncryptionService",
+        "NoiseSession",
+        "NoiseSessionManager",
+        "PacketProcessor",
+        "PacketRelayManager",
+        "PeerFingerprintManager",
+        "PeerManager",
+        "PowerManager",
+        "SecureIdentityStateManager",
+        "SecurityManager",
+        "StoreForwardManager"
+    )
+    private val meshTagMarkers = meshLogTags.map { " $it:" }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +143,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateStatus(false)
+        startLogcatStreaming()
+    }
+
+    override fun onDestroy() {
+        stopLogcatStreaming()
+        super.onDestroy()
     }
 
     private fun ensurePermissions() {
@@ -120,9 +164,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun appendLog(line: String) {
+        appendLogLine(line, includeTimestamp = true)
+    }
+
+    private fun appendRawLog(line: String) {
+        appendLogLine(line, includeTimestamp = false)
+    }
+
+    private fun appendLogLine(line: String, includeTimestamp: Boolean) {
         runOnUiThread {
-            val timestamp = LocalTime.now().format(timeFormatter)
-            logLines.addLast("$timestamp  $line")
+            val formattedLine = if (includeTimestamp) {
+                val timestamp = LocalTime.now().format(timeFormatter)
+                "$timestamp  $line"
+            } else {
+                line
+            }
+            logLines.addLast(formattedLine)
             while (logLines.size > maxLogLines) {
                 logLines.removeFirst()
             }
@@ -133,6 +190,53 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun startLogcatStreaming() {
+        if (logcatThread != null) return
+        try {
+            val pid = android.os.Process.myPid().toString()
+            val process = ProcessBuilder(logcatBinary, "-v", "time", "--pid", pid, "*:V")
+                .redirectErrorStream(true)
+                .start()
+            logcatProcess = process
+            appendLog("logcat streaming active for pid $pid")
+            logcatThread = Thread {
+                BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                    var line: String?
+                    while (!Thread.currentThread().isInterrupted) {
+                        line = reader.readLine() ?: break
+                        if (!line.isNullOrBlank() && shouldIncludeLogcatLine(line!!)) {
+                            appendRawLog(line!!)
+                        }
+                    }
+                }
+            }.apply {
+                name = "logcat-reader"
+                start()
+            }
+        } catch (e: Exception) {
+            appendLog("logcat stream failed: ${e.message}")
+        }
+    }
+
+    private fun stopLogcatStreaming() {
+        logcatThread?.interrupt()
+        logcatThread = null
+        logcatProcess?.destroy()
+        logcatProcess = null
+    }
+
+    private fun shouldIncludeLogcatLine(line: String): Boolean {
+        val match = logcatTagRegex.find(line)
+        val tag = match?.groupValues?.getOrNull(1)
+        if (tag != null) {
+            return tag in meshLogTags || tag.startsWith("Bitchat") || tag.startsWith("Bluetooth")
+        }
+        if (meshTagMarkers.any { line.contains(it) }) {
+            return true
+        }
+        return line.contains(" Bitchat") || line.contains(" Bluetooth")
     }
 
     private fun updateStatus(isRunning: Boolean) {

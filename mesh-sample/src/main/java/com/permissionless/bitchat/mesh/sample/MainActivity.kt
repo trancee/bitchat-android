@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatSpinner
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.permissionless.bitchat.mesh.MeshListener
 import com.permissionless.bitchat.mesh.MeshManager
 import com.bitchat.android.model.BitchatMessage
@@ -35,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var myPeerIdValue: TextView
     private lateinit var pendingDirectIndicator: TextView
     private lateinit var handshakePendingBadge: TextView
+    private lateinit var establishButton: Button
+    private lateinit var sessionStatusText: TextView
     private lateinit var peerIdSpinner: AppCompatSpinner
     private lateinit var peerAdapter: ArrayAdapter<String>
     private val peerIds: MutableList<String> = mutableListOf()
@@ -111,6 +114,8 @@ class MainActivity : AppCompatActivity() {
         myPeerIdValue = findViewById(R.id.my_peer_id_value)
         pendingDirectIndicator = findViewById(R.id.pending_direct_indicator)
         handshakePendingBadge = findViewById(R.id.handshake_pending_badge)
+        establishButton = findViewById(R.id.establish_button)
+        sessionStatusText = findViewById(R.id.session_status_text)
         peerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf<String>()).apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
@@ -124,6 +129,8 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 val peerId = peerIds.getOrNull(position).orEmpty()
                 if (peerId.isEmpty()) return
+                updateSessionStatus()
+                updatePendingIndicator()
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
@@ -157,6 +164,7 @@ class MainActivity : AppCompatActivity() {
                 appendLog("lost ${peerID}")
                 establishedPeers.remove(peerID)
                 clearPendingDirectMessages(peerID, reason = "lost")
+                updateSessionStatus()
             }
 
             override fun onConnected(peerID: String) {
@@ -167,12 +175,14 @@ class MainActivity : AppCompatActivity() {
                 appendLog("disconnected ${peerID}")
                 establishedPeers.remove(peerID)
                 clearPendingDirectMessages(peerID, reason = "disconnected")
+                updateSessionStatus()
             }
 
             override fun onEstablished(peerID: String) {
                 appendLog("session established ${peerID}")
                 establishedPeers.add(peerID)
                 flushPendingDirectMessages(peerID)
+                updateSessionStatus()
             }
 
             override fun onRSSIUpdated(peerID: String, rssi: Int) {
@@ -183,10 +193,12 @@ class MainActivity : AppCompatActivity() {
             override fun onStarted() {
                 updateMyPeerId()
                 appendLog("mesh started")
+                updateEstablishButtonState()
             }
 
             override fun onStopped() {
                 appendLog("mesh stopped")
+                updateEstablishButtonState()
             }
 
             override fun onDeliveryAck(messageID: String, recipientPeerID: String) {
@@ -212,6 +224,7 @@ class MainActivity : AppCompatActivity() {
             updateStatus(true)
             appendLog("mesh started")
             updateMyPeerId()
+            updateEstablishButtonState()
         }
 
         stopButton.setOnClickListener {
@@ -220,6 +233,7 @@ class MainActivity : AppCompatActivity() {
             appendLog("mesh stopped")
             myPeerIdValue.text = getString(R.string.label_peer_id_unknown)
             updatePeerSpinner(emptyList())
+            updateEstablishButtonState()
         }
 
         sendButton.setOnClickListener {
@@ -250,6 +264,21 @@ class MainActivity : AppCompatActivity() {
             messageInput.setText("")
         }
 
+        establishButton.setOnClickListener {
+            if (!meshManager.isStarted()) {
+                appendLog("mesh is not started")
+                return@setOnClickListener
+            }
+            val peerId = peerIds.getOrNull(peerIdSpinner.selectedItemPosition).orEmpty()
+            if (peerId.isEmpty()) {
+                appendLog("establish needs a selected peer")
+                return@setOnClickListener
+            }
+            meshManager.establish(peerId)
+            appendLog("establishing session with $peerId")
+            updateSessionStatus()
+        }
+
         clearButton.setOnClickListener {
             logLines.clear()
             logView.text = ""
@@ -262,6 +291,7 @@ class MainActivity : AppCompatActivity() {
 
         updateStatus(false)
         startLogcatStreaming()
+        updateSessionStatus()
     }
 
     override fun onDestroy() {
@@ -457,6 +487,34 @@ class MainActivity : AppCompatActivity() {
         } else if (peerIds.isNotEmpty()) {
             peerIdSpinner.setSelection(0, false)
         }
+        updateSessionStatus()
+        updatePendingIndicator()
+        updateEstablishButtonState()
+    }
+
+    private fun updateSessionStatus() {
+        runOnUiThread {
+            val selectedPeerId = peerIds.getOrNull(peerIdSpinner.selectedItemPosition).orEmpty()
+            val status = when {
+                selectedPeerId.isEmpty() -> getString(R.string.status_session_no_peer)
+                meshManager.isEstablished(selectedPeerId) -> getString(R.string.status_session_established)
+                else -> getString(R.string.status_session_not_established)
+            }
+            sessionStatusText.text = getString(R.string.label_session_status, status)
+            val colorRes = if (selectedPeerId.isEmpty()) {
+                R.color.mesh_text_hint
+            } else {
+                R.color.mesh_text_secondary
+            }
+            sessionStatusText.setTextColor(ContextCompat.getColor(this, colorRes))
+        }
+    }
+
+    private fun updateEstablishButtonState() {
+        runOnUiThread {
+            val selectedPeerId = peerIds.getOrNull(peerIdSpinner.selectedItemPosition).orEmpty()
+            establishButton.isEnabled = meshManager.isStarted() && selectedPeerId.isNotEmpty()
+        }
     }
 
     private fun queuePendingDirectMessage(peerId: String, nickname: String, content: String) {
@@ -512,7 +570,7 @@ class MainActivity : AppCompatActivity() {
                         iterator.remove()
                         continue
                     }
-                    meshManager.initiateNoiseHandshake(message.peerId)
+                    meshManager.establish(message.peerId)
                     message.attempts += 1
                 }
                 if (queue.isEmpty()) {

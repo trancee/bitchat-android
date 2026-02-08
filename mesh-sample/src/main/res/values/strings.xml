@@ -7,6 +7,7 @@
     <string name="action_stop">Stop mesh</string>
     <string name="action_send">Send broadcast</string>
     <string name="action_send_direct">Send direct</string>
+    <string name="action_establish">Establish session</string>
     <string name="action_clear">Clear</string>
     <string name="action_autoscroll">Auto-scroll</string>
     <string name="hint_message">Write a message</string>
@@ -16,6 +17,10 @@
     <string name="label_no_peers">No peers found</string>
     <string name="label_pending_direct">Pending direct: %1$d</string>
     <string name="label_handshake_pending">Handshake pending</string>
+    <string name="label_session_status">Session: %1$s</string>
+    <string name="status_session_established">established</string>
+    <string name="status_session_not_established">not established</string>
+    <string name="status_session_no_peer">no peer</string>
     <string name="status_running">Running</string>
     <string name="status_stopped">Stopped</string>
 </resources>

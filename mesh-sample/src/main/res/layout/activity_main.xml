@@ -141,6 +141,25 @@
         android:spinnerMode="dropdown" />
 
     <Button
+        android:id="@+id/establish_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/action_establish"
+        android:layout_marginTop="8dp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/mesh_surface_alt"
+        android:textColor="@color/mesh_text_primary" />
+
+    <TextView
+        android:id="@+id/session_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/label_session_status"
+        android:textSize="12sp"
+        android:textColor="@color/mesh_text_secondary" />
+
+    <Button
         android:id="@+id/send_direct_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

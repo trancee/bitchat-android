@@ -35,6 +35,8 @@ class MeshManager(private val context: Context) {
 
     fun isRunning(): Boolean = service?.isReusable() == true
 
+    fun isStarted(): Boolean = service != null && service?.isReusable() == true
+
     fun sendBroadcastMessage(content: String, mentions: List<String> = emptyList(), channel: String? = null) {
         service?.sendMessage(content, mentions, channel)
     }
@@ -48,9 +50,11 @@ class MeshManager(private val context: Context) {
         service?.sendPrivateMessage(content, recipientPeerID, recipientNickname, messageID)
     }
 
-    fun initiateNoiseHandshake(peerID: String) {
+    fun establish(peerID: String) {
         service?.initiateNoiseHandshake(peerID)
     }
+
+    fun isEstablished(peerID: String): Boolean = service?.hasEstablishedSession(peerID) == true
 
     fun sendFileBroadcast(file: BitchatFilePacket) {
         service?.sendFileBroadcast(file)

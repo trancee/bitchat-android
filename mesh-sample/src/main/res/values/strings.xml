@@ -6,9 +6,16 @@
     <string name="action_start">Start mesh</string>
     <string name="action_stop">Stop mesh</string>
     <string name="action_send">Send broadcast</string>
+    <string name="action_send_direct">Send direct</string>
     <string name="action_clear">Clear</string>
     <string name="action_autoscroll">Auto-scroll</string>
     <string name="hint_message">Write a message</string>
+    <string name="title_direct">Direct message</string>
+    <string name="label_my_peer_id">My peer ID</string>
+    <string name="label_peer_id_unknown">Not available yet</string>
+    <string name="label_no_peers">No peers found</string>
+    <string name="label_pending_direct">Pending direct: %1$d</string>
+    <string name="label_handshake_pending">Handshake pending</string>
     <string name="status_running">Running</string>
     <string name="status_stopped">Stopped</string>
 </resources>

@@ -49,6 +49,32 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/my_peer_id_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_my_peer_id"
+            android:textSize="12sp"
+            android:textColor="@color/mesh_text_secondary" />
+
+        <TextView
+            android:id="@+id/my_peer_id_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="@string/label_peer_id_unknown"
+            android:textSize="12sp"
+            android:textColor="@color/mesh_text_primary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:orientation="horizontal">
 
@@ -94,6 +120,60 @@
         android:textAllCaps="false"
         android:backgroundTint="@color/mesh_primary"
         android:textColor="@color/mesh_on_primary" />
+
+    <TextView
+        android:id="@+id/direct_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/title_direct"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/mesh_text_primary" />
+
+    <Spinner
+        android:id="@+id/peer_id_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="12dp"
+        android:background="@drawable/bg_input"
+        android:spinnerMode="dropdown" />
+
+    <Button
+        android:id="@+id/send_direct_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/action_send_direct"
+        android:layout_marginTop="10dp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/mesh_secondary"
+        android:textColor="@color/mesh_on_secondary" />
+
+    <TextView
+        android:id="@+id/pending_direct_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/label_pending_direct"
+        android:textSize="12sp"
+        android:textColor="@color/mesh_text_secondary"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/handshake_pending_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/label_handshake_pending"
+        android:textSize="11sp"
+        android:textColor="@color/mesh_text_secondary"
+        android:background="@drawable/bg_status_chip"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"

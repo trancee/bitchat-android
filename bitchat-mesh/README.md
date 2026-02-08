@@ -28,7 +28,17 @@ You must request BLE permissions in your app:
 val mesh = MeshManager(applicationContext)
 mesh.setListener(object : MeshListener {
     override fun onMessageReceived(message: BitchatMessage) { }
+    override fun onReceived(message: BitchatMessage) { }
+    override fun onSent(messageID: String?, recipientPeerID: String?) { }
     override fun onPeerListUpdated(peers: List<String>) { }
+    override fun onFound(peerID: String) { }
+    override fun onLost(peerID: String) { }
+    override fun onConnected(peerID: String) { }
+    override fun onDisconnected(peerID: String) { }
+    override fun onEstablished(peerID: String) { }
+    override fun onRSSIUpdated(peerID: String, rssi: Int) { }
+    override fun onStarted() { }
+    override fun onStopped() { }
     override fun onDeliveryAck(messageID: String, recipientPeerID: String) { }
     override fun onReadReceipt(messageID: String, recipientPeerID: String) { }
     override fun onVerifyChallenge(peerID: String, payload: ByteArray, timestampMs: Long) { }
@@ -48,8 +58,48 @@ mesh.setListener(object : MeshListener {
         Log.d("mesh", "${message.sender}: ${message.content}")
     }
 
+    override fun onReceived(message: BitchatMessage) {
+        Log.d("mesh", "received: ${message.id}")
+    }
+
+    override fun onSent(messageID: String?, recipientPeerID: String?) {
+        Log.d("mesh", "sent: ${messageID ?: "(broadcast)"}")
+    }
+
     override fun onPeerListUpdated(peers: List<String>) {
         Log.d("mesh", "peers: ${peers.size}")
+    }
+
+    override fun onFound(peerID: String) {
+        Log.d("mesh", "found: $peerID")
+    }
+
+    override fun onLost(peerID: String) {
+        Log.d("mesh", "lost: $peerID")
+    }
+
+    override fun onConnected(peerID: String) {
+        Log.d("mesh", "connected: $peerID")
+    }
+
+    override fun onDisconnected(peerID: String) {
+        Log.d("mesh", "disconnected: $peerID")
+    }
+
+    override fun onEstablished(peerID: String) {
+        Log.d("mesh", "established: $peerID")
+    }
+
+    override fun onRSSIUpdated(peerID: String, rssi: Int) {
+        Log.d("mesh", "rssi: $peerID -> $rssi")
+    }
+
+    override fun onStarted() {
+        Log.d("mesh", "started")
+    }
+
+    override fun onStopped() {
+        Log.d("mesh", "stopped")
     }
 
     override fun onDeliveryAck(messageID: String, recipientPeerID: String) { }
@@ -68,6 +118,7 @@ mesh.sendBroadcastMessage("hello nearby")
 - `MeshManager.sendPrivateMessage(content, recipientPeerID, recipientNickname)`
 - `MeshManager.sendFileBroadcast(file)` / `sendFilePrivate(peerID, file)`
 - `MeshManager.peerNicknames()` / `peerRssi()`
+- `MeshListener` callbacks: `onStarted`, `onStopped`, `onFound`, `onLost`, `onConnected`, `onDisconnected`, `onEstablished`, `onSent`, `onReceived`, `onRSSIUpdated`
 
 ## Notes
 - The library does not ship UI, notification handling, Tor, or Nostr.

@@ -48,6 +48,10 @@ class MeshManager(private val context: Context) {
         service?.sendPrivateMessage(content, recipientPeerID, recipientNickname, messageID)
     }
 
+    fun initiateNoiseHandshake(peerID: String) {
+        service?.initiateNoiseHandshake(peerID)
+    }
+
     fun sendFileBroadcast(file: BitchatFilePacket) {
         service?.sendFileBroadcast(file)
     }
@@ -64,10 +68,47 @@ class MeshManager(private val context: Context) {
         return object : BluetoothMeshDelegate {
             override fun didReceiveMessage(message: BitchatMessage) {
                 listener?.onMessageReceived(message)
+                listener?.onReceived(message)
+            }
+
+            override fun didSendMessage(messageID: String?, recipientPeerID: String?) {
+                listener?.onSent(messageID, recipientPeerID)
             }
 
             override fun didUpdatePeerList(peers: List<String>) {
                 listener?.onPeerListUpdated(peers)
+            }
+
+            override fun didFindPeer(peerID: String) {
+                listener?.onFound(peerID)
+            }
+
+            override fun didLosePeer(peerID: String) {
+                listener?.onLost(peerID)
+            }
+
+            override fun didConnectPeer(peerID: String) {
+                listener?.onConnected(peerID)
+            }
+
+            override fun didDisconnectPeer(peerID: String) {
+                listener?.onDisconnected(peerID)
+            }
+
+            override fun didEstablishSession(peerID: String) {
+                listener?.onEstablished(peerID)
+            }
+
+            override fun didUpdatePeerRSSI(peerID: String, rssi: Int) {
+                listener?.onRSSIUpdated(peerID, rssi)
+            }
+
+            override fun didStart() {
+                listener?.onStarted()
+            }
+
+            override fun didStop() {
+                listener?.onStopped()
             }
 
             override fun didReceiveChannelLeave(channel: String, fromPeer: String) {

@@ -64,6 +64,7 @@ class BluetoothMeshService(private val context: Context) {
     
     // Service state management
     private var isActive = false
+    private val directPeerIds = Collections.synchronizedSet(mutableSetOf<String>())
     
     // Delegate for message callbacks (maintains same interface)
     var delegate: BluetoothMeshDelegate? = null
@@ -79,6 +80,10 @@ class BluetoothMeshService(private val context: Context) {
         setupDelegates()
         messageHandler.packetProcessor = packetProcessor
         //startPeriodicDebugLogging()
+
+        encryptionService.onSessionEstablished = { peerID ->
+            delegate?.didEstablishSession(peerID)
+        }
 
         // Initialize sync manager (needs serviceScope)
         gossipSyncManager = GossipSyncManager(
@@ -180,6 +185,10 @@ class BluetoothMeshService(private val context: Context) {
                 delegate?.didUpdatePeerList(peerIDs)
             }
             override fun onPeerRemoved(peerID: String) {
+                if (directPeerIds.remove(peerID)) {
+                    delegate?.didDisconnectPeer(peerID)
+                }
+                delegate?.didLosePeer(peerID)
                 try { gossipSyncManager.removeAnnouncementForPeer(peerID) } catch (_: Exception) { }
                 // Remove from mesh graph topology to prevent routing through stale peers
                 try { com.bitchat.android.services.meshgraph.MeshGraphService.getInstance().removePeer(peerID) } catch (_: Exception) { }
@@ -468,6 +477,9 @@ class BluetoothMeshService(private val context: Context) {
                 serviceScope.launch {
                     // Process the announce
                     val isFirst = messageHandler.handleAnnounce(routed)
+                    if (isFirst) {
+                        routed.peerID?.let { delegate?.didFindPeer(it) }
+                    }
 
                     // Map device address -> peerID based on TTL (max TTL = direct neighbor)
                     // Matches iOS logic: any announce with max TTL on a link defines the direct peer
@@ -480,8 +492,22 @@ class BluetoothMeshService(private val context: Context) {
                         
                         if (isDirect) {
                             // Bind or rebind this device address to the announcing peer
-                            connectionManager.addressPeerMap[deviceAddress] = pid
+                            val previousPeer = connectionManager.addressPeerMap[deviceAddress]
+                            if (previousPeer != pid) {
+                                connectionManager.addressPeerMap[deviceAddress] = pid
+                            }
                             Log.d(TAG, "Mapped device $deviceAddress to peer $pid (TTL=${routed.packet.ttl})")
+
+                            if (directPeerIds.add(pid)) {
+                                delegate?.didConnectPeer(pid)
+                            }
+
+                            if (previousPeer != null && previousPeer != pid) {
+                                val stillDirect = connectionManager.addressPeerMap.containsValue(previousPeer)
+                                if (!stillDirect && directPeerIds.remove(previousPeer)) {
+                                    delegate?.didDisconnectPeer(previousPeer)
+                                }
+                            }
 
                             // Mark as directly connected - refresh UI state
                             try { peerManager.refreshPeerList() } catch (_: Exception) { }
@@ -587,6 +613,12 @@ class BluetoothMeshService(private val context: Context) {
                 // ConnectionTracker has already removed the address mapping; be defensive either way
                 connectionManager.addressPeerMap.remove(addr)
 
+                if (peer != null && !connectionManager.addressPeerMap.containsValue(peer)) {
+                    if (directPeerIds.remove(peer)) {
+                        delegate?.didDisconnectPeer(peer)
+                    }
+                }
+
                 // refresh peer list on disconnect. 
                 try { peerManager.refreshPeerList() } catch (_: Exception) { }
 
@@ -604,6 +636,7 @@ class BluetoothMeshService(private val context: Context) {
                 // Find the peer ID for this device address and update RSSI in PeerManager
                 connectionManager.addressPeerMap[deviceAddress]?.let { peerID ->
                     peerManager.updatePeerRSSI(peerID, rssi)
+                    delegate?.didUpdatePeerRSSI(peerID, rssi)
                 }
             }
         }
@@ -635,6 +668,7 @@ class BluetoothMeshService(private val context: Context) {
             // Start periodic syncs
             gossipSyncManager.start()
             Log.d(TAG, "GossipSyncManager started")
+            delegate?.didStart()
         } else {
             Log.e(TAG, "Failed to start Bluetooth services")
         }
@@ -670,6 +704,8 @@ class BluetoothMeshService(private val context: Context) {
             storeForwardManager.shutdown()
             messageHandler.shutdown()
             packetProcessor.shutdown()
+
+            delegate?.didStop()
             
             // Mark this instance as terminated and cancel its scope so it won't be reused
             terminated = true
@@ -713,6 +749,7 @@ class BluetoothMeshService(private val context: Context) {
             connectionManager.broadcastPacket(RoutedPacket(signedPacket))
             // Track our own broadcast message for sync
             try { gossipSyncManager.onPublicPacketSeen(signedPacket) } catch (_: Exception) { }
+            delegate?.didSendMessage(null, null)
         }
     }
 
@@ -744,6 +781,7 @@ class BluetoothMeshService(private val context: Context) {
             val transferId = sha256Hex(payload)
             connectionManager.broadcastPacket(RoutedPacket(signed, transferId = transferId))
             try { gossipSyncManager.onPublicPacketSeen(signed) } catch (_: Exception) { }
+            delegate?.didSendMessage(transferId, null)
         }
             } catch (e: Exception) {
             Log.e(TAG, "❌ sendFileBroadcast failed: ${e.message}", e)
@@ -802,6 +840,7 @@ class BluetoothMeshService(private val context: Context) {
                         val transferId = sha256Hex(filePayload)
                         connectionManager.broadcastPacket(RoutedPacket(signed, transferId = transferId))
                         Log.d(TAG, "✅ Sent encrypted file to $recipientPeerID")
+                        delegate?.didSendMessage(transferId, recipientPeerID)
                         
                     } catch (e: Exception) {
                         Log.e(TAG, "❌ Failed to encrypt file for $recipientPeerID: ${e.message}", e)
@@ -882,6 +921,7 @@ class BluetoothMeshService(private val context: Context) {
                     val signedPacket = signPacketBeforeBroadcast(packet)
                     connectionManager.broadcastPacket(RoutedPacket(signedPacket))
                     Log.d(TAG, "📤 Sent encrypted private message to $recipientPeerID (${encrypted.size} bytes)")
+                    delegate?.didSendMessage(finalMessageID, recipientPeerID)
                     
                     // FIXED: Don't send didReceiveMessage for our own sent messages
                     // This was causing self-notifications - iOS doesn't do this
@@ -1401,7 +1441,16 @@ class BluetoothMeshService(private val context: Context) {
  */
 interface BluetoothMeshDelegate {
     fun didReceiveMessage(message: BitchatMessage)
+    fun didSendMessage(messageID: String?, recipientPeerID: String?) {}
     fun didUpdatePeerList(peers: List<String>)
+    fun didFindPeer(peerID: String) {}
+    fun didLosePeer(peerID: String) {}
+    fun didConnectPeer(peerID: String) {}
+    fun didDisconnectPeer(peerID: String) {}
+    fun didEstablishSession(peerID: String) {}
+    fun didUpdatePeerRSSI(peerID: String, rssi: Int) {}
+    fun didStart() {}
+    fun didStop() {}
     fun didReceiveChannelLeave(channel: String, fromPeer: String)
     fun didReceiveDeliveryAck(messageID: String, recipientPeerID: String)
     fun didReceiveReadReceipt(messageID: String, recipientPeerID: String)
